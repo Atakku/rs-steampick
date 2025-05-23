@@ -8,8 +8,9 @@ server = ["dioxus/server"]
 desktop = ["dioxus/desktop"]
 
 [dependencies]
-dioxus = { version = "0.6.3", features = ["launch", "fullstack"] }
-serde = { version = "1.0.219", features = ["derive"] }
+dioxus = { version = "0.6", features = ["fullstack"] }
+serde = { version = "1.0", features = ["derive"] }
+reqwest = { version = "0.12", features = ["default-tls"] }
 
 [profile]
 

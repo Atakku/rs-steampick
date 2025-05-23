@@ -2,8 +2,7 @@ use dioxus::prelude::*;
 
 fn main() {
   // Set the url of the server where server functions are hosted.
-  #[cfg(not(feature = "server"))]
-  dioxus::fullstack::prelude::server_fn::client::set_server_url("https://steampick.atakku.dev");
+  server_fn::client::set_server_url("https://steampick.atakku.dev");
   dioxus::launch(app);
 }
 
