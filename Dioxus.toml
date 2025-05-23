@@ -1,0 +1,6 @@
+[application]
+name = "steampick"
+
+[bundle]
+identifier = "dev.atakku"
+publisher = "Atakku"
