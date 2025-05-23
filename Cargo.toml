@@ -10,3 +10,15 @@ desktop = ["dioxus/desktop"]
 [dependencies]
 dioxus = { version = "0.6.3", features = ["launch", "fullstack"] }
 serde = { version = "1.0.219", features = ["derive"] }
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
