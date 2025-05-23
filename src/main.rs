@@ -1,41 +1,53 @@
+// Copyright 2025 Atakku <https://atakku.dev>
+//
+// This project is dual licensed under MIT and Apache.
+
+#![allow(non_snake_case)]
+
+use api::Order;
 use dioxus::prelude::*;
+use rand::seq::IndexedRandom;
+
+pub type AppId = u32;
+
+mod api;
+#[cfg(feature = "server")]
+mod server;
+mod ui;
+
+static CSS: Asset = asset!("/assets/paper.min.css");
 
 fn main() {
-  // Set the url of the server where server functions are hosted.
+  // Set the url of the server where server functions are hosted..
+  #[cfg(not(feature = "server"))]
   server_fn::client::set_server_url("https://steampick.atakku.dev");
+
+  #[cfg(feature = "server")]
+  server::get_data();
+
   dioxus::launch(app);
 }
 
 pub fn app() -> Element {
-    let mut count = use_signal(|| 0);
-    let mut text = use_signal(|| "...".to_string());
+  let mut order = use_signal(|| Order::Random);
+  let mut get_games = use_resource(move || api::get_games(order()));
+  let mut count = use_signal(|| 0);
 
-    rsx! {
+  match &*get_games.read_unchecked() {
+    Some(Ok(games)) => {
+      let len = games.len();
+      rsx! {
+        //document::Stylesheet { href: CSS }
         h1 { "High-Five counter: {count}" }
-        button { onclick: move |_| count += 1, "Up high!" }
-        button { onclick: move |_| count -= 1, "Down low!" }
-        button {
-            onclick: move |_| async move {
-                if let Ok(data) = get_server_data().await {
-                    println!("Client received: {}", data);
-                    text.set(data.clone());
-                    post_server_data(data).await.unwrap();
-                }
-            },
-            "Run a server function"
-        }
-        "Server said: {text}"
+        button { onclick: move |_| count.set((count + 1) % len), "Up high!" }
+        button { onclick: move |_| count.set((count - 1) % len), "Down low!" }
+      }
     }
-}
-
-#[server(endpoint = "post_server_data")]
-async fn post_server_data(data: String) -> Result<(), ServerFnError> {
-    println!("Server received: {}", data);
-
-    Ok(())
-}
-
-#[server(endpoint = "get_server_data")]
-async fn get_server_data() -> Result<String, ServerFnError> {
-    Ok("Hello from the server!".to_string())
+    Some(Err(_)) => rsx! {
+        div { "Loading games failed" }
+    },
+    None => rsx! {
+        div { "Loading games..." }
+    },
+  }
 }

@@ -1,0 +1,5 @@
+tab_spaces = 2
+where_single_line = true
+group_imports = "One"
+imports_granularity = "Crate"
+use_small_heuristics = "Max"
