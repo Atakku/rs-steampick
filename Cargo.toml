@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [features]
-server = ["dioxus/server", "dep:derivative", "dep:nestruct", "reqwest/blocking", "dep:rand"]
+server = ["dioxus/server", "dep:derivative", "dep:serde_with", "dep:nestruct", "dep:rand", "reqwest/blocking"]
 desktop = ["dioxus/desktop", "dioxus/router"]
 
 [dependencies]
