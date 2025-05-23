@@ -1,0 +1,13 @@
+[package]
+name = "steampick"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+server = ["dioxus/server"]
+desktop = ["dioxus/desktop"]
+
+[dependencies]
+bincode = { version = "2.0.1", features = ["serde"] }
+dioxus = { version = "0.6.3", features = ["launch", "fullstack"] }
+serde = { version = "1.0.219", features = ["derive"] }
