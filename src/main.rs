@@ -28,7 +28,7 @@ fn main() {
 }
 
 pub fn app() -> Element {
-  let mut order = use_signal(|| Order::Score);
+  let mut order = use_signal(|| Order::Score(300));
   let mut list = use_resource(move || api::get_games(order()));
   //let mut len = use_memo(move || {
   //  list.read().unwrap().map(|i| i.len()).unwrap_or(0);
