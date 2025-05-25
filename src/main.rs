@@ -14,6 +14,7 @@ mod api;
 mod server;
 mod ui;
 
+#[cfg(feature = "desktop")]
 static CSS: Asset = asset!("/assets/tailwind.css");
 
 fn main() {
@@ -59,6 +60,9 @@ pub fn app() -> Element {
         rsx! {
           match &*game.read_unchecked() {
           Some(Ok(Some(game))) => rsx! {
+            if let Some(t) = &game.trailer {
+              h1 { "Games: {t}" }
+            },
             h1 { "Games: {count}/{len} {game.name}" }
           },
           _ => rsx! {div { "Meow" }},
