@@ -6,7 +6,6 @@
 
 use api::Order;
 use dioxus::prelude::*;
-use rand::seq::IndexedRandom;
 
 pub type AppId = u32;
 
@@ -29,25 +28,40 @@ fn main() {
 }
 
 pub fn app() -> Element {
-  let mut order = use_signal(|| Order::Random);
-  let mut get_games = use_resource(move || api::get_games(order()));
-  let mut count = use_signal(|| 0);
+  let mut order = use_signal(|| Order::Score);
+  let mut list = use_resource(move || api::get_games(order()));
+  //let mut len = use_memo(move || {
+  //  list.read().unwrap().map(|i| i.len()).unwrap_or(0);
+  //});
+  //let mut count = use_signal(|| 0);
+  //let mut list = use_resource(move || api::get_game(list[count.read()]));
+  //let mut game = use_signal(|| None);
+  //let mut get_games = use_resource(move || async move {
+  //  let data = api::get_games(order()).await.unwrap();
+  //  let game = api::get_game(data[count() as usize]).await;
+  //});
 
-  match &*get_games.read_unchecked() {
+  match &*list.read_unchecked() {
     Some(Ok(games)) => {
-      let len = games.len();
+      let mut count = use_signal(|| 0);
+      let mut len = use_memo(move || list.unwrap().unwrap().len() as i32 - 1);
+      let mut id = use_memo(move || list.unwrap().unwrap()[count() as usize]);
+      let game = use_resource(move || api::get_game(id()));
       rsx! {
-        //document::Stylesheet { href: CSS }
-        h1 { "High-Five counter: {count}" }
-        button { onclick: move |_| count.set((count + 1) % len), "Up high!" }
-        button { onclick: move |_| count.set((count - 1) % len), "Down low!" }
+        match &*game.read_unchecked() {
+        Some(Ok(Some(game))) => rsx! {
+          h1 { "Games: {count}/{len} {game.name}" }
+        },
+        _ => rsx! {div { "Meow" }},
+      }
+      button { onclick: move |_| count.set((count + 1) % len()), "Click me!" }
       }
     }
     Some(Err(_)) => rsx! {
-        div { "Loading games failed" }
+      div { "Loading games failed" }
     },
     None => rsx! {
-        div { "Loading games..." }
+      div { "Loading games..." }
     },
   }
 }

@@ -5,6 +5,7 @@
 use crate::AppId;
 #[cfg(feature = "server")]
 use crate::server::*;
+use atklib::VecExt;
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -16,6 +17,7 @@ pub async fn get_game(id: AppId) -> Result<Option<App>, ServerFnError> {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum Order {
   Random,
+  Score
 }
 
 #[server(endpoint = "get_games")]
@@ -25,6 +27,11 @@ pub async fn get_games(order: Order) -> Result<Vec<AppId>, ServerFnError> {
   use rand::seq::SliceRandom;
   match order {
     Order::Random => values.shuffle(&mut rand::rng()),
+    Order::Score => {
+      values = values.filter(|(_, i)| i.reviews.clone().is_some_and(|i| i.summary_filtered.is_some_and(|i| i.percent_positive.is_some_and(|i| i > 0))));
+      values.sort_by_key(|(_, i)| i.reviews.clone().unwrap_or_default().summary_filtered.unwrap_or_default().percent_positive.unwrap_or(0));
+      values.reverse();
+    },
   }
   Ok(values.into_iter().map(|(k, _)| *k).collect())
 }

@@ -30,6 +30,10 @@ nestruct::flatten! {
       //included_appids
       //is_free
       //is_early_access
+      #[serde(default, skip_serializing_if = "Vec::is_empty")]
+      content_descriptorids: [i32],
+      #[serde(default, skip_serializing_if = "Vec::is_empty")]
+      tagids: [u32],
       related_items: {
         parent_appid: u32?,
       }?,
@@ -39,10 +43,6 @@ nestruct::flatten! {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         included_packages: [StoreItem],
       }?,
-      #[serde(default, skip_serializing_if = "Vec::is_empty")]
-      content_descriptorids: [i32],
-      #[serde(default, skip_serializing_if = "Vec::is_empty")]
-      tagids: [u32],
       categories: {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         supported_player_categoryids: [u32],
@@ -241,6 +241,8 @@ nestruct::flatten! {
       include_included_items: bool,
       #[derivative(Default(value = "true"))]
       include_assets_without_overrides: bool,
+      #[derivative(Default(value = "true"))]
+      include_links: bool,
     }
   }
 }
