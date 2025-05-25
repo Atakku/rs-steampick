@@ -67,7 +67,13 @@ impl From<&StoreItem> for App {
         .map(|i| {
           i.highlights
             .first()
-            .map(|i| i.trailer_480p.first().map(|i| i.filename.clone()).flatten())
+            .map(|i| {
+              if let Some(format) = &i.trailer_url_format && let Some(trailer) = i.trailer_480p.first() {
+                trailer.filename.clone().map(|i| format.replace("${FILENAME}", &i))
+              } else {
+                None
+              }
+            })
             .flatten()
         })
         .flatten(),
