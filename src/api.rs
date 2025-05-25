@@ -68,11 +68,13 @@ impl From<&StoreItem> for App {
           i.highlights
             .first()
             .map(|i| {
-              if let Some(format) = &i.trailer_url_format && let Some(trailer) = i.trailer_480p.first() {
-                trailer.filename.clone().map(|i| format.replace("${FILENAME}", &i))
-              } else {
-                None
-              }
+              let Some(format) = &i.trailer_url_format else {
+                return None;
+              };
+              let Some(trailer) = i.trailer_480p.first() else {
+                return None;
+              };
+              trailer.filename.clone().map(|i| format.replace("${FILENAME}", &i))
             })
             .flatten()
         })
