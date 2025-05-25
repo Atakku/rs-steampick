@@ -17,7 +17,7 @@ pub async fn get_game(id: AppId) -> Result<Option<App>, ServerFnError> {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum Order {
   Random,
-  Score(u32)
+  Score(u32),
 }
 
 #[server(endpoint = "get_games")]
@@ -28,10 +28,22 @@ pub async fn get_games(order: Order) -> Result<Vec<AppId>, ServerFnError> {
   match order {
     Order::Random => values.shuffle(&mut rand::rng()),
     Order::Score(min) => {
-      values = values.filter(|(_, i)| i.reviews.clone().is_some_and(|i| i.summary_filtered.is_some_and(|i| i.review_count.is_some_and(|i| i >= min))));
-      values.sort_by_key(|(_, i)| i.reviews.clone().unwrap_or_default().summary_filtered.unwrap_or_default().percent_positive.unwrap_or(0));
+      values = values.filter(|(_, i)| {
+        i.reviews.clone().is_some_and(|i| {
+          i.summary_filtered.is_some_and(|i| i.review_count.is_some_and(|i| i >= min))
+        })
+      });
+      values.sort_by_key(|(_, i)| {
+        i.reviews
+          .clone()
+          .unwrap_or_default()
+          .summary_filtered
+          .unwrap_or_default()
+          .percent_positive
+          .unwrap_or(0)
+      });
       values.reverse();
-    },
+    }
   }
   Ok(values.into_iter().map(|(k, _)| *k).collect())
 }
@@ -40,11 +52,25 @@ pub async fn get_games(order: Order) -> Result<Vec<AppId>, ServerFnError> {
 pub struct App {
   pub id: AppId,
   pub name: String,
+  pub trailer: Option<String>,
 }
 
 #[cfg(feature = "server")]
 impl From<&StoreItem> for App {
   fn from(value: &StoreItem) -> Self {
-    Self { id: value.id, name: value.name.clone() }
+    Self {
+      id: value.id,
+      name: value.name.clone(),
+      trailer: value
+        .trailers
+        .clone()
+        .map(|i| {
+          i.highlights
+            .first()
+            .map(|i| i.trailer_480p.first().map(|i| i.filename.clone()).flatten())
+            .flatten()
+        })
+        .flatten(),
+    }
   }
 }
