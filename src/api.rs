@@ -18,6 +18,7 @@ pub async fn get_game(id: AppId) -> Result<Option<App>, ServerFnError> {
 pub enum Order {
   Random,
   Score(u32),
+  ScoreAndFilterTag(u32, u32),
 }
 
 #[server(endpoint = "get_games")]
@@ -43,6 +44,24 @@ pub async fn get_games(order: Order) -> Result<Vec<AppId>, ServerFnError> {
           .unwrap_or(0)
       });
       values.reverse();
+    },
+    Order::ScoreAndFilterTag(min, tag) => {
+      values = values.filter(|(_, i)| {
+        i.tagids.contains(&tag) &&
+        i.reviews.clone().is_some_and(|i| {
+          i.summary_filtered.is_some_and(|i| i.review_count.is_some_and(|i| i >= min))
+        })
+      });
+      values.sort_by_key(|(_, i)| {
+        i.reviews
+          .clone()
+          .unwrap_or_default()
+          .summary_filtered
+          .unwrap_or_default()
+          .percent_positive
+          .unwrap_or(0)
+      });
+      values.reverse();
     }
   }
   Ok(values.into_iter().map(|(k, _)| *k).collect())
@@ -53,6 +72,7 @@ pub struct App {
   pub id: AppId,
   pub name: String,
   pub trailer: Option<String>,
+  //pub full_description: Option<String>
 }
 
 #[cfg(feature = "server")]
@@ -79,6 +99,7 @@ impl From<&StoreItem> for App {
             .flatten()
         })
         .flatten(),
+        //full_description: value.full_description
     }
   }
 }

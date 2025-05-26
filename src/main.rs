@@ -21,7 +21,7 @@ fn main() {
   #[cfg(feature = "server")]
   {
     server::get_data();
-    dioxus::launch(|| rsx!{});
+    dioxus::launch(|| rsx! {});
   }
 
   #[cfg(feature = "desktop")]
@@ -59,15 +59,27 @@ pub fn app() -> Element {
         let game = use_resource(move || api::get_game(id()));
         rsx! {
           match &*game.read_unchecked() {
-          Some(Ok(Some(game))) => rsx! {
-            if let Some(t) = &game.trailer {
-              h1 { "Games: {t}" }
+            Some(Ok(Some(game))) => rsx! {
+              if let Some(t) = &game.trailer {
+                video {
+                  autoplay: true,
+                  r#loop: true,
+                  muted: false,
+                  class: "h-[480px] w-[854px] bg-black",
+                  src: "https://shared.cloudflare.steamstatic.com/store_item_assets/{t}"
+                }
+              },
+              h1 { "Games: {count}/{len} {game.name}" }
             },
-            h1 { "Games: {count}/{len} {game.name}" }
-          },
-          _ => rsx! {div { "Meow" }},
-        }
-        button { onclick: move |_| count.set((count + 1) % len()), "Click me!" }
+            _ => rsx! {h1 { "Games: {count}/{len} some fuckin shit went wrong meow" }},
+          }
+          button { onclick: move |_| count.set((count + 1) % len()), "Next game!!!!" }
+          br {  }
+          button { onclick: move |_| order.set(Order::Score(1000)), "Order by score (>1000 reviews)" }
+          br {  }
+          button { onclick: move |_| order.set(Order::Random), "Order randomly" }
+          br {}
+          button { onclick: move |_| order.set(Order::ScoreAndFilterTag(1000, 3859)), "Order by score (>1000 reviews) and Multiplayer only" }
         }
       }
       Some(Err(_)) => rsx! {
