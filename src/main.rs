@@ -21,15 +21,15 @@ fn main() {
   #[cfg(feature = "server")]
   {
     server::get_data();
-    dioxus::launch(|| rsx! {});
+    dioxus::launch(|| rsx! {div{}});
   }
 
   #[cfg(feature = "desktop")]
   {
     server_fn::client::set_server_url("https://steampick.atakku.dev");
-    use dioxus::desktop::{Config, WindowBuilder};
+    use dioxus::desktop::{wry::dpi::PhysicalSize, Config, WindowBuilder};
     dioxus::LaunchBuilder::desktop()
-      .with_cfg(Config::default().with_window(WindowBuilder::new().with_decorations(false)))
+      .with_cfg(Config::default().with_window(WindowBuilder::new().with_inner_size(PhysicalSize::new(300, 300)).with_always_on_top(true).with_decorations(false)))
       .launch(app);
   }
 }
@@ -56,30 +56,32 @@ pub fn app() -> Element {
         let mut count = use_signal(|| 0);
         let mut len = use_memo(move || list.unwrap().unwrap().len() as i32 - 1);
         let mut id = use_memo(move || list.unwrap().unwrap()[count() as usize]);
-        let game = use_resource(move || api::get_game(id()));
+        let game = use_resource(move || {open::that(format!("steam://advertise/{id}")).unwrap(); api::get_game(id())});
         rsx! {
           match &*game.read_unchecked() {
             Some(Ok(Some(game))) => rsx! {
-              if let Some(t) = &game.trailer {
-                video {
-                  autoplay: true,
-                  r#loop: true,
-                  muted: false,
-                  class: "h-[480px] w-[854px] bg-black",
-                  src: "https://shared.cloudflare.steamstatic.com/store_item_assets/{t}"
-                }
-              },
+              //if let Some(t) = &game.trailer {
+              //  video {
+              //    autoplay: true,
+              //    r#loop: true,
+              //    muted: false,
+              //    class: "h-[480px] w-[854px] bg-black",
+              //    src: "https://shared.cloudflare.steamstatic.com/store_item_assets/{t}"
+              //  }
+              //},
               h1 { "Games: {count}/{len} {game.name}" }
             },
             _ => rsx! {h1 { "Games: {count}/{len} some fuckin shit went wrong meow" }},
           }
-          button { onclick: move |_| count.set((count + 1) % len()), "Next game!!!!" }
+          button { onclick: move |_| count.set((len() as i32 + count() - 1) % len()), "Previous game!!!!" }
           br {  }
-          button { onclick: move |_| order.set(Order::Score(1000)), "Order by score (>1000 reviews)" }
+          button { onclick: move |_| count.set((len() as i32 + count() + 1) % len()), "Next game!!!!" }
           br {  }
-          button { onclick: move |_| order.set(Order::Random), "Order randomly" }
+          button { onclick: move |_| {count.set(0); order.set(Order::Score(1000))}, "{order}" }
+          br {  }
+          button { onclick: move |_| {count.set(0); order.set(Order::Random)}, "Order randomly" }
           br {}
-          button { onclick: move |_| order.set(Order::ScoreAndFilterTag(1000, 3859)), "Order by score (>1000 reviews) and Multiplayer only" }
+          button { onclick: move |_| {count.set(0); order.set(Order::ScoreAndFilterTag(1000, 3859))}, "Order by score (>1000 reviews) and Multiplayer only" }
         }
       }
       Some(Err(_)) => rsx! {

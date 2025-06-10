@@ -2,6 +2,8 @@
 //
 // This project is dual licensed under MIT and Apache.
 
+use std::{ffi::os_str::Display, fmt};
+
 use crate::AppId;
 #[cfg(feature = "server")]
 use crate::server::*;
@@ -19,6 +21,16 @@ pub enum Order {
   Random,
   Score(u32),
   ScoreAndFilterTag(u32, u32),
+}
+
+impl fmt::Display for Order {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Order::Random => write!(f, "Random order"),
+      Order::Score(min) => write!(f, "Random order"),
+      Order::ScoreAndFilterTag(min, tag) => write!(f, "Random order"),
+    }
+  }
 }
 
 #[server(endpoint = "get_games")]

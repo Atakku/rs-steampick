@@ -1,6 +1,4 @@
-{
-  "response": {
-    "apps": [
+[
       {
         "appid": 10,
         "owner_steamids": [
@@ -15055,7 +15053,4 @@
           5
         ]
       }
-    ],
-    "owner_steamid": "76561199019024562"
-  }
-}
+    ]

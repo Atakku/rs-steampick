@@ -4,3 +4,6 @@ name = "steampick"
 [bundle]
 identifier = "dev.atakku"
 publisher = "Atakku"
+icon = [
+  "icons/icon.ico"
+]
