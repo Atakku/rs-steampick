@@ -1,0 +1,10 @@
+[package]
+name = "steampick_client"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+steampick.workspace = true
+atklib.workspace = true
+eframe.workspace = true
+reqwest.workspace = true

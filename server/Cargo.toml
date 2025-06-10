@@ -1,0 +1,16 @@
+[package]
+name = "steampick_server"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+steampick.workspace = true
+atklib.workspace = true
+serde.workspace = true
+nestruct.workspace = true
+derivative.workspace = true
+serde_with.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+axum.workspace = true
+tokio.workspace = true

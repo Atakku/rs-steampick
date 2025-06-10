@@ -2,14 +2,13 @@
 //
 // This project is dual licensed under MIT and Apache.
 
-use atklib::{R, once_cell};
+use atklib::once_cell;
 use derivative::Derivative;
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use std::{collections::HashMap, fs};
-
-use crate::AppId;
+use steampick::{App, AppId};
 
 nestruct::flatten! {
   #[serde_as]
@@ -276,4 +275,28 @@ once_cell!(|pub data: HashMap<AppId, StoreItem>| {
 #[derive(Deserialize, Default)]
 pub struct Response<T> {
   response: T,
+}
+
+impl Into<App> for StoreItem {
+  fn into(self) -> App {
+    App {
+      id: self.id,
+      title: self.name,
+      review_count: self
+        .reviews
+        .clone()
+        .map(|i| i.summary_filtered.map(|i| i.review_count))
+        .flatten()
+        .flatten()
+        .unwrap_or(0),
+      review_percent: self
+        .reviews
+        .clone()
+        .map(|i| i.summary_filtered.map(|i| i.percent_positive))
+        .flatten()
+        .flatten()
+        .unwrap_or(0),
+      tags: self.tagids,
+    }
+  }
 }

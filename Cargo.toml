@@ -1,33 +1,20 @@
-[package]
-name = "steampick"
-version = "0.1.0"
+[workspace]
+members = ["client", "server", "shared"]
+resolver = "2"
+
+[workspace.package]
+version = "0.0.0"
 edition = "2024"
 
-[features]
-default = []
-server = ["dioxus/server", "dioxus/fullstack", "dep:derivative", "dep:serde_with", "dep:nestruct", "dep:rand", "reqwest/blocking"]
-desktop = ["dioxus/desktop"]
-
-[dependencies]
+[workspace.dependencies]
+steampick.path = "shared"
 atklib = { git = "https://github.com/Atakku/rs-atklib.git", rev = "147b219" }
-dioxus = { version = "0.6" }
+eframe = "0.31"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-reqwest = { version = "0.12", features = ["default-tls"] }
-nestruct = { version = "0.1.0", optional = true }
-derivative = { version = "2.2", optional = true }
-serde_with = { version = "3.8", optional = true }
-rand = { version = "0.9", optional = true }
-open = "5.3"
-
-[profile]
-
-[profile.wasm-dev]
-inherits = "dev"
-opt-level = 1
-
-[profile.server-dev]
-inherits = "dev"
-
-[profile.android-dev]
-inherits = "dev"
+tokio = { version = "1.45", features = ["macros", "rt-multi-thread"] }
+nestruct = "0.1"
+derivative = "2.2"
+serde_with = "3.8"
+reqwest = { version = "0.12", features = ["default-tls", "blocking", "json"] }
+axum = "0.8"
