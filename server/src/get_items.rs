@@ -3,7 +3,6 @@
 // This project is dual licensed under MIT and Apache.
 
 use atklib::*;
-use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use std::{collections::HashMap, fs, thread::sleep, time::Duration};
@@ -44,7 +43,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
   let missing: HashMap<AppId, Apps> = input_apps.into_iter().filter(|(k, v)| !cached_apps.contains_key(k)).collect();
   for (k, v) in missing {
     println!("Getting {k}");
-    let Ok(r) = Client::new().get(format!("https://store.steampowered.com/appreviews/{k}?json=1")).send() else {
+    let Ok(r) = reqwest::blocking::get(format!("https://store.steampowered.com/appreviews/{k}?json=1")).send() else {
       println!("Failed to send req: {k}");
       continue;
     };

@@ -25,7 +25,7 @@ fn main() -> eframe::Result {
   state.apps.sort_by(|a, b| a.score().partial_cmp(&b.score()).unwrap());
   state.apps.reverse();
   state.scroll(0);
-  eframe::run_native("SteamPick", options, Box::new(|cc| Ok(Box::new(state))))
+  eframe::run_native("SteamPick", options, Box::new(|_| Ok(Box::new(state))))
 }
 
 struct AppState {
