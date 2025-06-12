@@ -3,6 +3,7 @@
 // This project is dual licensed under MIT and Apache.
 
 use atklib::*;
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use std::{collections::HashMap, fs, thread::sleep, time::Duration};
@@ -42,10 +43,13 @@ once_cell!(|pub data: HashMap<AppId, App>| {
   let mut cached_apps: HashMap<AppId, App> = cached_apps.into_iter().filter(|(k, v)| input_apps.contains_key(k)).collect();
   let missing: HashMap<AppId, Apps> = input_apps.into_iter().filter(|(k, v)| !cached_apps.contains_key(k)).collect();
   println!("missing {}", missing.len());
+  let mut c = Client::new();
   for (k, v) in missing {
     println!("Getting {k}");
-    let Ok(r) = reqwest::blocking::get(format!("https://store.steampowered.com/appreviews/{k}?json=1")) else {
+    let Ok(r) = c.get(format!("https://store.steampowered.com/appreviews/{k}?json=1&language=all")).send() else {
       println!("Failed to send req: {k}");
+      sleep(Duration::from_secs(1));
+      c = Client::new();
       continue;
     };
     let Ok(json) = r.text() else {
@@ -59,7 +63,6 @@ once_cell!(|pub data: HashMap<AppId, App>| {
     let q = q.query_summary;
     cached_apps.insert(k, App { id: k, title: v.name, reviews_positive: q.total_positive, reviews_negative: q.total_negative });
     fs::write("cache.json", serde_json::to_string_pretty(&cached_apps).unwrap());
-    sleep(Duration::from_secs(2));
   }
   cached_apps
 });
