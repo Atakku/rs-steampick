@@ -8,3 +8,4 @@ steampick.workspace = true
 atklib.workspace = true
 eframe.workspace = true
 reqwest.workspace = true
+open.workspace = true
