@@ -21,6 +21,6 @@ impl App {
   }
 
   pub fn score(&self) -> f32 {
-    self.reviews_positive as f32 / self.reviews() as f32
+    self.reviews_positive as f32 * 100.0 / self.reviews() as f32
   }
 }
