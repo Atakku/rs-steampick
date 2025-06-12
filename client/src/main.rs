@@ -21,8 +21,8 @@ fn main() -> eframe::Result {
   };
   let h =
     reqwest::blocking::get("https://steampick.atakku.dev").unwrap().json::<Vec<App>>().unwrap();
-  let mut state = AppState { count: 0, apps: h.filter(|i| i.review_count >= 600) };
-  state.apps.sort_by_key(|i| i.review_percent);
+  let mut state = AppState { count: 0, apps: h.filter(|i| i.reviews() >= 600) };
+  state.apps.sort_by(|a, b| a.score().partial_cmp(&b.score()).unwrap());
   state.apps.reverse();
   state.scroll(0);
   eframe::run_native("SteamPick", options, Box::new(|cc| Ok(Box::new(state))))
@@ -142,9 +142,10 @@ impl eframe::App for AppState {
       let mut ui = ui.new_child(UiBuilder::new().max_rect(content_rect));
 
       ui.heading(format!(
-        "Score: {:0>2}% ({})",
-        &self.app().review_percent,
-        &self.app().review_count
+        "Score: {:.2}% ({})",
+
+        &self.app().score(),
+        &self.app().reviews()
       ));
       ui.horizontal(|ui| {
         if ui.add(Button::new(RichText::new("<<").size(20.0))).on_hover_text("Rewind x10").clicked() {

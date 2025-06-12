@@ -14,3 +14,13 @@ pub struct App {
   pub reviews_negative: u32,
   //pub tags: Vec<u32>,
 }
+
+impl App {
+  pub fn reviews(&self) -> u32 {
+    self.reviews_negative + self.reviews_positive
+  }
+
+  pub fn score(&self) -> f32 {
+    self.reviews_positive as f32 / self.reviews() as f32
+  }
+}
