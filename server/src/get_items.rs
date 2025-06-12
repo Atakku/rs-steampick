@@ -41,6 +41,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
   let cached_apps: HashMap<AppId, App> = serde_json::from_str(&fs::read_to_string("./cache.json").unwrap_or("{}".into())).unwrap_or_default();
   let mut cached_apps: HashMap<AppId, App> = cached_apps.into_iter().filter(|(k, v)| input_apps.contains_key(k)).collect();
   let missing: HashMap<AppId, Apps> = input_apps.into_iter().filter(|(k, v)| !cached_apps.contains_key(k)).collect();
+  println!("missing {}", missing.len());
   for (k, v) in missing {
     println!("Getting {k}");
     let Ok(r) = reqwest::blocking::get(format!("https://store.steampowered.com/appreviews/{k}?json=1")) else {
