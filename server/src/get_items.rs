@@ -29,8 +29,8 @@ nestruct::flatten! {
   #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Default)]
   AppReviews {
     query_summary: {
-      total_positive: u32,
-      total_negative: u32
+      total_positive: Option<u32>,
+      total_negative: Option<u32>
     }
   }
 }
@@ -56,7 +56,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
       continue;
     };
     let q = q.query_summary;
-    cached_apps.insert(k, App { id: k, title: v.name, reviews_positive: q.total_positive, reviews_negative: q.total_negative });
+    cached_apps.insert(k, App { id: k, title: v.name, reviews_positive: q.total_positive.unwrap_or(0), reviews_negative: q.total_negative.unwrap_or(0) });
     fs::write("cache.json", serde_json::to_string_pretty(&cached_apps).unwrap());
     sleep(Duration::from_secs(2));
   }
