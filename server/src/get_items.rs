@@ -43,6 +43,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
   let mut cached_apps: HashMap<AppId, App> = cached_apps.into_iter().filter(|(k, v)| input_apps.contains_key(k)).collect();
   let missing: HashMap<AppId, Apps> = input_apps.into_iter().filter(|(k, v)| !cached_apps.contains_key(k)).collect();
   for (k, v) in missing {
+    println!("Getting {k}");
     let Ok(r) = Client::new().get(format!("https://store.steampowered.com/appreviews/{k}?json=1")).send() else {
       println!("Failed to send req: {k}");
       continue;
@@ -58,7 +59,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
     let q = q.query_summary;
     cached_apps.insert(k, App { id: k, title: v.name, reviews_positive: q.total_positive, reviews_negative: q.total_negative });
     fs::write("cache.json", serde_json::to_string_pretty(&cached_apps).unwrap());
-    sleep(Duration::from_secs(1));
+    sleep(Duration::from_secs(2));
   }
   cached_apps
 });
