@@ -6,11 +6,11 @@ use serde::{Deserialize, Serialize};
 
 pub type AppId = u32;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct App {
   pub id: AppId,
   pub title: String,
-  pub review_count: u32,
-  pub review_percent: i32,
-  pub tags: Vec<u32>,
+  pub reviews_positive: u32,
+  pub reviews_negative: u32,
+  //pub tags: Vec<u32>,
 }

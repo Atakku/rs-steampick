@@ -2,7 +2,6 @@
 //
 // This project is dual licensed under MIT and Apache
 
-use atklib::HashMapExt;
 use axum::{Json, Router, routing::get};
 use steampick::App;
 
@@ -20,5 +19,5 @@ async fn main() {
 }
 
 async fn handler() -> Json<Vec<App>> {
-  Json(get_items::get_data().clone().map(|(_, v)| v.into()))
+  Json(get_items::get_data().iter().map(|(_, v)| v.clone()).collect())
 }

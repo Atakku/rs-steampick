@@ -8,7 +8,6 @@ steampick.workspace = true
 atklib.workspace = true
 serde.workspace = true
 nestruct.workspace = true
-derivative.workspace = true
 serde_with.workspace = true
 reqwest.workspace = true
 serde_json.workspace = true
