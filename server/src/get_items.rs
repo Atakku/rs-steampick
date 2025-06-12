@@ -50,7 +50,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
     };
     let q = q.query_summary;
     cached_apps.insert(k, App { id: k, title: v.name, reviews_positive: q.total_positive, reviews_negative: q.total_negative });
-    fs::write("cacheq.json", serde_json::to_string(&cached_apps).unwrap());
+    fs::write("cache.json", serde_json::to_string(&cached_apps).unwrap());
   }
   cached_apps
 });
