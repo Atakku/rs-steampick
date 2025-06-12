@@ -43,7 +43,7 @@ once_cell!(|pub data: HashMap<AppId, App>| {
   let missing: HashMap<AppId, Apps> = input_apps.into_iter().filter(|(k, v)| !cached_apps.contains_key(k)).collect();
   for (k, v) in missing {
     println!("Getting {k}");
-    let Ok(r) = reqwest::blocking::get(format!("https://store.steampowered.com/appreviews/{k}?json=1")).send() else {
+    let Ok(r) = reqwest::blocking::get(format!("https://store.steampowered.com/appreviews/{k}?json=1")) else {
       println!("Failed to send req: {k}");
       continue;
     };
