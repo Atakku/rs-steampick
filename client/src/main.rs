@@ -5,47 +5,81 @@
 #![windows_subsystem = "windows"]
 
 use atklib::*;
-use eframe::egui::{self, Button, CentralPanel, Context, RichText, ViewportCommand, Visuals};
+use eframe::egui::{self, Button, CentralPanel, Context, RichText, Ui, ViewportCommand, Visuals};
 use steampick::App;
+
+const DIMS: [f32; 2] = [320.0, 150.0];
 
 fn main() -> eframe::Result {
   let options = eframe::NativeOptions {
     viewport: egui::ViewportBuilder::default()
       .with_always_on_top()
-      .with_inner_size([250.0, 150.0])
-      .with_min_inner_size([250.0, 150.0])
-      .with_max_inner_size([250.0, 150.0])
+      .with_inner_size(DIMS)
+      .with_min_inner_size(DIMS)
+      .with_max_inner_size(DIMS)
       .with_decorations(false)
       .with_transparent(true),
     ..Default::default()
   };
-  let h =
-    reqwest::blocking::get("https://steampick.atakku.dev").unwrap().json::<Vec<App>>().unwrap();
-  let mut state = AppState { count: 0, apps: h.filter(|i| i.reviews() >= 600) };
-  state.apps.sort_by(|a, b| a.score().partial_cmp(&b.score()).unwrap());
-  state.apps.reverse();
-  state.scroll(0);
-  eframe::run_native("SteamPick", options, Box::new(|_| Ok(Box::new(state))))
+  eframe::run_native("SteamPick", options, Box::new(|_| Ok(Box::new(AppState::new()))))
 }
 
+#[derive(Default)]
 struct AppState {
-  pub count: usize,
+  pub index: usize,
+  pub raw: Vec<App>,
   pub apps: Vec<App>,
+  pub min_rev: usize,
 }
 
 impl AppState {
+  fn new() -> Self {
+    let raw =
+      reqwest::blocking::get("https://steampick.atakku.dev").unwrap().json::<Vec<App>>().unwrap();
+    let mut app = Self { raw, min_rev: 600, ..Default::default() };
+    app.update_apps();
+    app
+  }
+
   fn app<'a>(&'a self) -> &'a App {
-    &self.apps[self.count]
+    &self.apps[self.index]
   }
 
   fn link(&self, link: &str) {
     open::that(format!("steam://{link}/{}", self.app().id)).unwrap();
   }
 
-  fn scroll(&mut self, change: i32) {
-    self.count = ((self.count + self.apps.len()) as i32 + change) as usize % self.apps.len();
+  fn scroll_store(&mut self, change: i32) {
+    scroll(&mut self.index, self.apps.len(), change);
     self.link("store");
   }
+
+  fn scroll_rev(&mut self, change: i32) {
+    let raw_min_rev = if self.min_rev <= 1 { 0 } else { self.min_rev };
+    self.min_rev = (raw_min_rev as i32 + change).max(1) as usize;
+    self.update_apps();
+  }
+
+  fn update_apps(&mut self) {
+    self.apps = self.raw.clone().filter(|i| i.reviews() as usize >= self.min_rev);
+    self.apps.sort_by(|a, b| a.score().partial_cmp(&b.score()).unwrap());
+    self.apps.reverse();
+    self.scroll_store(0);
+  }
+
+  fn link_button(&self, ui: &mut Ui, name: &str, path: &str) {
+    if ui.add(Button::new(RichText::new(name).size(16.0))).clicked() {
+      self.link(path);
+    }
+  }
+
+  fn arrow(&self, ui: &mut Ui, name: &str, desc: &str) -> bool {
+    ui.add(Button::new(RichText::new(name).size(20.0))).on_hover_text(desc).clicked()
+  }
+}
+
+fn scroll(index: &mut usize, count: usize, change: i32) {
+  *index = ((*index + count) as i32 + change) as usize % count;
 }
 
 impl eframe::App for AppState {
@@ -141,46 +175,57 @@ impl eframe::App for AppState {
       .shrink(4.0);
       let mut ui = ui.new_child(UiBuilder::new().max_rect(content_rect));
 
-      ui.heading(format!(
-        "Score: {:.2}% ({})",
+      ui.heading(format!("Reviews: {} ({:.2}%)", &self.app().reviews(), &self.app().score()));
+      ui.horizontal(|ui| {
+        if self.arrow(ui, "<<", "Rewind x100") {
+          self.scroll_store(-100);
+        }
+        if self.arrow(ui, "<-", "Rewind x10") {
+          self.scroll_store(-10);
+        }
+        if self.arrow(ui, "<", "Rewind 1") {
+          self.scroll_store(-1);
+        }
+        ui.heading(format!("[{:0>4}/{:0>4}]", self.index + 1, self.apps.len(),));
+        if self.arrow(ui, ">", "Forward x1") {
+          self.scroll_store(1);
+        };
+        if self.arrow(ui, "->", "Forward x10") {
+          self.scroll_store(10);
+        };
+        if self.arrow(ui, ">>", "Forward x100") {
+          self.scroll_store(100);
+        };
+      });
 
-        &self.app().score(),
-        &self.app().reviews()
-      ));
       ui.horizontal(|ui| {
-        if ui.add(Button::new(RichText::new("<<").size(20.0))).on_hover_text("Rewind x10").clicked() {
-          self.scroll(-10);
+        if self.arrow(ui, "---", "Decrease minimum reviews filter by 50") {
+          self.scroll_rev(-500);
         }
-        if ui.add(Button::new(RichText::new("<-").size(20.0))).on_hover_text("Rewind x1").clicked() {
-          self.scroll(-1);
+        if self.arrow(ui, "--", "Decrease minimum reviews filter by 50") {
+          self.scroll_rev(-50);
         }
-        ui.heading(format!("[{:0>4}/{:0>4}]", self.count + 1, self.apps.len(),));
-        if ui.add(Button::new(RichText::new("->").size(20.0))).on_hover_text("Forward x1").clicked() {
-          self.scroll(1);
+        if self.arrow(ui, "-", "Decrease minimum reviews filter by 5") {
+          self.scroll_rev(-5);
+        }
+        ui.heading(format!("Min: {}", self.min_rev,));
+        if self.arrow(ui, "+", "Increase minimum reviews filter by 5") {
+          self.scroll_rev(5);
         };
-        if ui.add(Button::new(RichText::new(">>").size(20.0))).on_hover_text("Forward x10").clicked() {
-          self.scroll(10);
+        if self.arrow(ui, "++", "Increase minimum reviews filter by 50") {
+          self.scroll_rev(50);
+        };
+        if self.arrow(ui, "+++", "Increase minimum reviews filter by 50") {
+          self.scroll_rev(500);
         };
       });
-      
-      ui.horizontal(|ui| {
-        if ui.add(Button::new(RichText::new("Download").size(16.0))).clicked() {
-          self.link("install");
-        }
-        if ui.add(Button::new(RichText::new("Launch").size(16.0))).clicked() {
-          self.link("launch");
-        }
-        if ui.add(Button::new(RichText::new("Library").size(16.0))).clicked() {
-          self.link("open/library/details");
-        }
-      });
-      ui.horizontal(|ui| {
-        if ui.add(Button::new(RichText::new("Friends").size(16.0))).clicked() {
-          self.link("url/CommunityFriendsThatPlay");
-        }
-        if ui.add(Button::new(RichText::new("News").size(16.0))).clicked() {
-          self.link("updatenews");
-        }
+
+      ui.horizontal_wrapped(|ui| {
+        self.link_button(ui, "Install", "install");
+        self.link_button(ui, "Launch", "launch");
+        self.link_button(ui, "Library", "open/library/details");
+        self.link_button(ui, "Friends", "url/CommunityFriendsThatPlay");
+        self.link_button(ui, "News", "updatenews");
       });
     });
   }
