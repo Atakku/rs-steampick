@@ -30,3 +30,4 @@ serde_with = "^3.16"
 reqwest = { version = "^0.12", features = ["default-tls", "blocking", "json"] }
 axum = "^0.8"
 open = "^5.3"
+itertools = "0.14.0"

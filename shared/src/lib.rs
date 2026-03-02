@@ -2,6 +2,8 @@
 //
 // This project is dual licensed under MIT and Apache.
 
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 
 pub type AppId = u32;
@@ -12,7 +14,7 @@ pub struct App {
   pub title: String,
   pub reviews_positive: u32,
   pub reviews_negative: u32,
-  //pub tags: Vec<u32>,
+  pub tags: HashSet<String>,
 }
 
 impl App {
