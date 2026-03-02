@@ -8,7 +8,7 @@ use atklib::*;
 use eframe::egui::{self, Button, CentralPanel, Context, RichText, Ui, ViewportCommand, Visuals};
 use steampick::App;
 
-const DIMS: [f32; 2] = [320.0, 150.0];
+const DIMS: [f32; 2] = [320.0, 200.0];
 
 fn main() -> eframe::Result {
   let options = eframe::NativeOptions {
@@ -30,6 +30,8 @@ struct AppState {
   pub raw: Vec<App>,
   pub apps: Vec<App>,
   pub min_rev: usize,
+  pub whitelist: String,
+  pub blacklist: String
 }
 
 impl AppState {
@@ -61,9 +63,21 @@ impl AppState {
   }
 
   fn update_apps(&mut self) {
-    self.apps = self.raw.clone().filter(|i| i.reviews() as usize >= self.min_rev);
+    let blacklist = self.blacklist.split(",").map(|i| i.trim().to_lowercase().to_string()).filter(|i| !i.is_empty()).collect::<Vec<String>>();
+    let whitelist = self.whitelist.split(",").map(|i| i.trim().to_lowercase().to_string()).filter(|i| !i.is_empty()).collect::<Vec<String>>();
+
+    self.apps = self.raw.clone().into_iter()
+      .filter(|i| i.reviews() as usize >= self.min_rev)
+      .filter(|i| blacklist.is_empty() || !i.tags.iter().any(|l| blacklist.contains(&l.to_lowercase())))
+      .filter(|i| whitelist.is_empty() || i.tags.iter().any(|l| whitelist.contains(&l.to_lowercase())))
+      .collect();
     self.apps.sort_by(|a, b| a.score().partial_cmp(&b.score()).unwrap());
     self.apps.reverse();
+
+    if self.apps.is_empty() {
+      self.apps = vec![App { id: 0, title: "No results".to_string(), reviews_positive: 0, reviews_negative: 0, tags: Default::default() }]
+    }
+
     self.scroll_store(0);
   }
 
@@ -226,6 +240,18 @@ impl eframe::App for AppState {
         self.link_button(ui, "Library", "open/library/details");
         self.link_button(ui, "Friends", "url/CommunityFriendsThatPlay");
         self.link_button(ui, "News", "updatenews");
+      });
+
+      ui.horizontal(|ui| {
+        if ui.text_edit_singleline(&mut self.whitelist).changed() {
+          self.update_apps();
+        }
+      });
+
+      ui.horizontal(|ui| {
+        if ui.text_edit_singleline(&mut self.blacklist).changed() {
+          self.update_apps();
+        }
       });
     });
   }
