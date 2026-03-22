@@ -107,11 +107,12 @@ once_cell!(async |pub data: HashMap<AppId, App>| {
         println!("Failed to get text: {k}");
         continue;
       };
-      let Ok(q) = serde_json::from_str::<SteamSpy>(&json) else {
+      if let Ok(q) = serde_json::from_str::<SteamSpy>(&json) {
+        q.tags.map(|i| i.0)
+      } else {
         println!("Failed to parse response: {json}");
-        continue;
-      };
-      q.tags.map(|i| i.0)
+        vec![]
+      }
     };
     //let tags = {
     //  let Ok(r) = Client::new().get(format!("https://store.steampowered.com/app/{k}")).send().await else {
