@@ -14,3 +14,5 @@ serde_json.workspace = true
 axum.workspace = true
 tokio.workspace = true
 itertools.workspace = true
+scraper.workspace = true
+html-escape.workspace = true

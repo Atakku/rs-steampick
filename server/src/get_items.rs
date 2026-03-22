@@ -3,13 +3,13 @@
 // This project is dual licensed under MIT and Apache.
 
 use atklib::*;
-use reqwest::blocking::Client;
+use reqwest::Client;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use std::{
   collections::{HashMap, HashSet},
   fs,
-  thread::sleep,
   time::Duration,
 };
 use steampick::{App, AppId};
@@ -17,7 +17,7 @@ use steampick::{App, AppId};
 nestruct::flatten! {
   #[serde_as]
   #[skip_serializing_none]
-  #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd, Eq, Ord, Default)]
+  #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
   Types {
     family_apps_response: {
       apps: [{
@@ -42,11 +42,14 @@ nestruct::flatten! {
           description: String
         }]
       }
+    },
+    steam_spy: {
+      tags: HashMap<String, u64>
     }
   }
 }
 
-once_cell!(|pub data: HashMap<AppId, App>| {
+once_cell!(async |pub data: HashMap<AppId, App>| {
   let input_apps: Response<FamilyAppsResponse> = serde_json::from_str(&fs::read_to_string("./data.json").unwrap_or("{}".into())).unwrap_or_default();
   let input_apps: HashMap<AppId, bool> = input_apps.response.apps.into_iter().filter(|a| a.exclude_reason == 0).map(|i| (i.appid, true)).collect();
   //input_apps.extend(iter);serde_json::from_str::<Vec<u32>>(&fs::read_to_string("./extra.json").unwrap_or("[]".into())).unwrap_or_default();
@@ -58,13 +61,13 @@ once_cell!(|pub data: HashMap<AppId, App>| {
   println!("missing {}", missing.len());
 
   for k in missing {
-    println!("Getting {k}");
+    println!("Getting appdetails/{k}");
     let meta = {
-      let Ok(r) = Client::new().get(format!("https://store.steampowered.com/api/appdetails?appids={k}")).send() else {
+      let Ok(r) = Client::new().get(format!("https://store.steampowered.com/api/appdetails?appids={k}")).send().await else {
         println!("Failed to send req: {k}");
         continue;
       };
-      let Ok(json) = r.text() else {
+      let Ok(json) = r.text().await else {
         println!("Failed to get text: {k}");
         continue;
       };
@@ -78,12 +81,13 @@ once_cell!(|pub data: HashMap<AppId, App>| {
       };
       q
     };
+    println!("Getting appreviews/{k}");
     let rev = {
-      let Ok(r) = Client::new().get(format!("https://store.steampowered.com/appreviews/{k}?json=1&language=all")).send() else {
+      let Ok(r) = Client::new().get(format!("https://store.steampowered.com/appreviews/{k}?json=1&language=all")).send().await else {
         println!("Failed to send req: {k}");
         continue;
       };
-      let Ok(json) = r.text() else {
+      let Ok(json) = r.text().await else {
         println!("Failed to get text: {k}");
         continue;
       };
@@ -93,7 +97,35 @@ once_cell!(|pub data: HashMap<AppId, App>| {
       };
       q.query_summary
     };
-    let tags: HashSet<String> = meta.data.categories.into_iter().map(|i| i.description).chain(meta.data.genres.into_iter().map(|i| i.description)).collect();
+    println!("Getting tags/{k}");
+    let tags: Vec<_> = {
+      let Ok(r) = Client::new().get(format!("https://steamspy.com/api.php?request=appdetails&appid={k}")).send().await else {
+        println!("Failed to send req: {k}");
+        continue;
+      };
+      let Ok(json) = r.text().await else {
+        println!("Failed to get text: {k}");
+        continue;
+      };
+      let Ok(q) = serde_json::from_str::<SteamSpy>(&json) else {
+        println!("Failed to parse response: {json}");
+        continue;
+      };
+      q.tags.map(|i| i.0)
+    };
+    //let tags = {
+    //  let Ok(r) = Client::new().get(format!("https://store.steampowered.com/app/{k}")).send().await else {
+    //    println!("Failed to send req: {k}");
+    //    continue;
+    //  };
+    //  let Ok(html) = r.text().await else {
+    //    println!("Failed to get text: {k}");
+    //    continue;
+    //  };
+    //  Html::parse_document(&html).select(&Selector::parse("a.app_tag").unwrap()).map(|i| html_escape::decode_html_entities(&i.inner_html()).trim().to_string()).collect::<Vec<_>>()
+    //};
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    let tags: HashSet<String> = meta.data.categories.into_iter().map(|i| i.description).chain(meta.data.genres.into_iter().map(|i| i.description)).chain(tags).collect();
     cached_apps.insert(k, App { id: k, title: meta.data.name, reviews_positive: rev.total_positive, reviews_negative: rev.total_negative, tags: tags });
     fs::write("cache.json", serde_json::to_string_pretty(&cached_apps).unwrap());
   }

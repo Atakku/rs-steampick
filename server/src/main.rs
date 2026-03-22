@@ -9,7 +9,7 @@ pub mod get_items;
 
 #[tokio::main]
 async fn main() {
-  get_items::get_data();
+  get_items::get_data().await;
   axum::serve(
     tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap(),
     Router::new().route("/", get(handler)),
@@ -19,5 +19,5 @@ async fn main() {
 }
 
 async fn handler() -> Json<Vec<App>> {
-  Json(get_items::get_data().iter().map(|(_, v)| v.clone()).collect())
+  Json(get_items::get_data().await.iter().map(|(_, v)| v.clone()).collect())
 }
