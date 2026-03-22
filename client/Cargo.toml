@@ -7,5 +7,5 @@ edition.workspace = true
 steampick.workspace = true
 atklib.workspace = true
 eframe.workspace = true
-reqwest.workspace = true
+reqwest = { workspace = true, features = ["blocking"] }
 open.workspace = true
