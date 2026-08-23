@@ -24,12 +24,12 @@ atklib = { git = "https://github.com/Atakku/rs-atklib.git", rev = "147b219" }
 eframe = "^0.33"
 serde = { version = "^1.0", features = ["derive"] }
 serde_json = "^1.0"
-tokio = { version = "^1.50", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "^1.53", features = ["macros", "rt-multi-thread"] }
 nestruct = "^0.1"
-serde_with = "^3.18"
+serde_with = "^3.22"
 reqwest = { version = "^0.13", features = ["default-tls", "json"] }
 axum = "^0.8"
-open = "^5.3"
-itertools = "^0.14"
-scraper = "^0.26"
+open = "^5.4"
+itertools = "^0.15"
+scraper = "^0.27"
 html-escape = "^0.2"
